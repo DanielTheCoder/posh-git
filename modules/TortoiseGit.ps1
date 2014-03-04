@@ -34,6 +34,40 @@ function tgit {
   }
 }
 
+# FROM here on: INTERFACE Implementations
+
+function TortoiseGit_GetFunctionExports() {
+  # Exported functions
+  return $tortoiseGitfunctionList
+}
+
+# Handles tgit <command> (tortoisegit)
+function TortoiseGit_GitTabExpansion($lastBlock) {
+    #write-host "TortoiseGit_GitTabExpansion"
+    
+    # Handles tgit <command> (tortoisegit)
+    if($lastBlock -match "^$(Get-AliasPattern tgit) (?<cmd>\S*)$") {
+        # Need return statement to prevent fall-through.
+        $result = $tortoiseGitCommands | where { $_ -like "$($matches['cmd'])*" }
+        return $result
+    }
+    return $false
+}
+
+# Handles tgit <command> (tortoisegit)
+function TortoiseGit_TabExpansion($lastBlock) {
+
+  if($lastBlock -match "^$(Get-AliasPattern tgit) (.*)") {
+      $result = GitTabExpansion $lastBlock 
+      return $result
+  }
+  return $false
+}
+
+$tortoiseGitfunctionList = @(
+'tgit'
+) | sort
+
 $tortoiseGitCommands = @(
 "about",
 "log",

@@ -159,11 +159,10 @@ function GitTabExpansion($lastBlock) {
         $lastBlock = expandGitAlias $Matches['cmd'] $Matches['args']
     }
 
-    # Handles tgit <command> (tortoisegit)
-    if($lastBlock -match "^$(Get-AliasPattern tgit) (?<cmd>\S*)$") {
-            # Need return statement to prevent fall-through.
-            return $tortoiseGitCommands | where { $_ -like "$($matches['cmd'])*" }
-    }
+    $scriptRunResult = Run-Scripts "Global" $global:poshgit_modules_global "GitTabExpansion" $lastBlock
+    #Write-host ("ScriptRunResult:" + $scriptRunResult)
+    if($scriptRunResult) { 
+        return $scriptRunResult}
 
     switch -regex ($lastBlock -replace "^$(Get-AliasPattern git) ","") {
 
@@ -171,7 +170,6 @@ function GitTabExpansion($lastBlock) {
         "^(?<cmd>$($subcommands.Keys -join '|'))\s+(?<op>\S*)$" {
             gitCmdOperations $subcommands $matches['cmd'] $matches['op']
         }
-
 
         # Handles git flow <cmd> <op>
         "^flow (?<cmd>$($gitflowsubcommands.Keys -join '|'))\s+(?<op>\S*)$" {
@@ -301,10 +299,14 @@ if (Test-Path Function:\TabExpansion) {
 function TabExpansion($line, $lastWord) {
     $lastBlock = [regex]::Split($line, '[|;]')[-1].TrimStart()
 
+    $scriptRunResult = Run-Scripts "Global" $global:poshgit_modules_global "TabExpansion" $lastBlock
+    #Write-host ("ScriptRunResult:" + $scriptRunResult)
+    if($scriptRunResult) { 
+        return $scriptRunResult}
+
     switch -regex ($lastBlock) {
         # Execute git tab completion for all git-related commands
         "^$(Get-AliasPattern git) (.*)" { GitTabExpansion $lastBlock }
-        "^$(Get-AliasPattern tgit) (.*)" { GitTabExpansion $lastBlock }
 
         # Fall back on existing tab expansion
         default { if (Test-Path Function:\TabExpansionBackup) { TabExpansionBackup $line $lastWord } }
